@@ -7,4 +7,4 @@ echo "$KUBE_CONFIG_DATA" | base64 --decode > /tmp/config
 export KUBECONFIG=/tmp/config
 
 # Delete kubernetes pod 
-sh -c "kubectl${KUBECTL_VERSION:+.${KUBECTL_VERSION}} delete pod ${pod_name} -n ${namespace}"
+sh -c "kubectl${KUBECTL_VERSION:+.${KUBECTL_VERSION}} delete pod ${POD_DELETE} -n ${NAMESPACE}"
