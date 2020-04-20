@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM gcr.io/cloud-builders/kubectl
 
 LABEL version="1.0.0"
 LABEL name="Pod Delete"
@@ -11,16 +11,12 @@ LABEL com.github.actions.description="Runs kubectl delete pod on a given namespa
 LABEL com.github.actions.icon="terminal"
 LABEL com.github.actions.color="blue"
 
-RUN apt-get update                                          \
-  && apt-get -y --force-yes install --no-install-recommends     \
-    wget                                                    \
-    curl
-ARG KUBECTL_VERSION=1.17.0
-ADD https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl /usr/local/bin/kubectl
-RUN chmod +x /usr/local/bin/kubectl
+RUN apt-get update && apt-get install -y git
 
 COPY LICENSE README.md /
 COPY entrypoint.sh /entrypoint.sh
+COPY experiments ./experiments
+COPY litmus ./litmus
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["help"]
