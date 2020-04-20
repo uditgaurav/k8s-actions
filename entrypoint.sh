@@ -15,7 +15,7 @@ export KUBECONFIG=/tmp/config
 
 ##Fetching the RBAC file
 printf "Creating RBAC for pod-delete experiment\n"
-wget -O rbac.yml https://raw.githubusercontent.com/litmuschaos/chaos-charts/master/charts/generic/pod-delete/rbac.yaml
+curl -o rbac.yml https://raw.githubusercontent.com/litmuschaos/chaos-charts/master/charts/generic/pod-delete/rbac.yaml
 ##Changing the required fild
 sed -i 's/namespace: default/namespace: '"$namespace"'/' rbac.yml
 ## Creating the Service Account for the experiment
@@ -29,7 +29,7 @@ echo "Service Account has been created"
 
 ##Fetching the engine file
 printf "Creating engine for pod-delete experiment\n"
-wget -O engine.yml https://raw.githubusercontent.com/litmuschaos/chaos-charts/master/charts/generic/pod-delete/engine.yaml
+curl -o engine.yml https://raw.githubusercontent.com/litmuschaos/chaos-charts/master/charts/generic/pod-delete/engine.yaml
 ##Changing the required fild
 sed -i "s/namespace: default/namespace: '"$namespace"'/g;"\
 "s/appns: 'default'/appns: "$namespace"/g;"\
