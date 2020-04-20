@@ -11,7 +11,7 @@ LABEL com.github.actions.description="Runs kubectl delete pod on a given namespa
 LABEL com.github.actions.icon="terminal"
 LABEL com.github.actions.color="blue"
 
-RUN yum install wget
+RUN apt-get install -y wget
 
 COPY LICENSE README.md /
 COPY entrypoint.sh /entrypoint.sh
