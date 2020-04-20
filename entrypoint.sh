@@ -62,7 +62,7 @@ kubectl logs $jobpodName -n litmus
 ##Getting the verdict of chaosresult
 chaosResultVerdict=$(kubectl get chaosresult nginx-chaos-pod-delete -n litmus -o jsonpath='{.status.experimentstatus.verdict}')
 
-if [${chaosResultVerdict} == 'Pass']
+if [ ${chaosResultVerdict} == "Pass" ]
 then
    echo "Congratulations the verdict of the experiment is: ${chaosResultVerdict}"
 else
