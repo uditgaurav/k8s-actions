@@ -21,9 +21,11 @@ dir=${GOPATH}/src/github.com/litmuschaos/chaos-ci-lib
 
 if [[ ! -z $AWS_ACCESS_KEY_ID ]] && [[ ! -z $AWS_SECRET_ACCESS_KEY ]] && [[ ! -z $AWS_REGION ]]
 then 
-aws configure set default.region ${AWS_REGION}
-aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
-aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
+mkdir -p ${HOME}/.aws
+touch ${HOME}/.aws/credentials
+echo "[default]" >> ${HOME}/.aws/credentials
+echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ${HOME}/.aws/credentials
+echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ${HOME}/.aws/credentials
 fi
 
 if [ ! -d $dir ]
