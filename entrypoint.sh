@@ -1,55 +1,46 @@
-# #!/bin/sh
+#!/bin/bash
 
-# set -e
+set -e
 
-# # Extract the base64 encoded config data and write this to the KUBECONFIG
-# echo "$KUBE_CONFIG_DATA" | base64 --decode > /tmp/config
-# export KUBECONFIG=/tmp/config
+TOTAL_CHAOS_DURATION=${TOTAL_CHAOS_DURATION:=60}
+TEST_TIMEOUT=$((600 + $TOTAL_CHAOS_DURATION))
+PARALLEL_EXECUTION=${PARALLEL_EXECUTION:=1}
 
-# ##Install litmus if it is not already installed
-# if [ $INSTALL_LITMUS = true ]
-# then
-#   sh /litmus/installation.sh
-# fi
+##Extract the base64 encoded config data and write this to the KUBECONFIG
+mkdir -p ${HOME}/.kube
+echo "$KUBE_CONFIG_DATA" | base64 --decode > ${HOME}/.kube/config
+export KUBECONFIG=${HOME}/.kube/config
 
-# ##Select an experiment 
-# if [ $EXPERIMENT_NAME = "pod-delete" ]
-# then
-#   sh /experiments/pod-delete/pod-delete.sh
+##Setup 
+mkdir -p $HOME/go/src/github.com/litmuschaos
+cd ${GOPATH}/src/github.com/litmuschaos/
+dir=${GOPATH}/src/github.com/litmuschaos/chaos-ci-lib
 
-# elif [ $EXPERIMENT_NAME = "container-kill" ]
-# then
-#   sh /experiments/container-kill/container-kill.sh
+if [ ! -d $dir ]
+then
+  git clone https://github.com/litmuschaos/chaos-ci-lib.git
+fi
+cd chaos-ci-lib
 
-# elif [ $EXPERIMENT_NAME = "node-cpu-hog" ]
-# then
-#   sh /experiments/node-cpu-hog/node-cpu-hog.sh
+##Install litmus if it is not already installed
+if [ "$INSTALL_LITMUS" == "true" ]
+then
+  go test litmus/install-litmus_test.go -v -count=1
+fi
 
-# elif [ $EXPERIMENT_NAME = "node-memory-hog" ]
-# then
-#   sh /experiments/node-memory-hog/node-memory-hog.sh
+if [ "$EXPERIMENT_NAME" == "all" ]; then
+## Run all BDDs 
+  cd experiments
+  ginkgo -nodes=${PARALLEL_EXECUTION}
+  cd ..
 
-# elif [ $EXPERIMENT_NAME = "pod-cpu-hog" ]
-# then
-#   sh /experiments/pod-cpu-hog/pod-cpu-hog.sh
+elif [ ! -z "$EXPERIMENT_NAME" ]; then
+## Run the selected chaos experiment
+  go test experiments/${EXPERIMENT_NAME}_test.go -v -count=1 -timeout=${TEST_TIMEOUT}s
+fi
 
-# elif [ $EXPERIMENT_NAME = "pod-network-corruption" ]
-# then
-#   sh /experiments/pod-network-corruption/pod-network-corruption.sh
-
-# elif [ $EXPERIMENT_NAME = "pod-network-latency" ]
-# then
-#   sh /experiments/pod-network-latency/pod-network-latency.sh
-
-# elif [ $EXPERIMENT_NAME = "pod-network-loss" ]
-# then
-#   sh /experiments/pod-network-loss/pod-network-loss.sh
-
-# fi
-
-# ##litmus cleanup
-# if [ $LITMUS_CLEANUP = true ]
-# then
-#   sh /litmus/cleanup.sh
-# fi
-
+##litmus cleanup
+if [ "$LITMUS_CLEANUP" == "true" ]
+then
+  go test litmus/uninstall-litmus_test.go -v -count=1
+fi

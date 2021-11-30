@@ -1,49 +1,49 @@
-# Node Memory Hog Experiment
+# Pod Network Duplication Experiment
 
-This experiment causes Memory exhaustion on the Kubernetes node. The experiment aims to verify the resiliency of applications whose replicas may be evicted on account on nodes turning unschedulable due to lack of Memory resources. Check <a href="https://docs.litmuschaos.io/docs/node-memory-hog/">node memory hog docs</a> for more info. To know more and get started with chaos-actions visit <a href="https://github.com/litmuschaos/github-chaos-actions/blob/master/README.md">github-chaos-actions</a>. 
+This chaos action Injects packet dupication on the specified container by starting a traffic control (tc) process with netem rules to add disrupt network connectivity to kubernetes pods. Check <a href="https://docs.litmuschaos.io/docs/pod-network-duplication/">pod network duplication docs</a> for more info.To know more and get started with chaos-actions visit <a href="https://github.com/litmuschaos/github-chaos-actions/blob/master/README.md">github-chaos-actions</a>. 
 
 #### Sample workflow 
 
-A Sample workflow to run node-memory-hog experiment:
+A Sample workflow to run pod network duplication experiment:
 
-`.github/workflows/push.yml`
+`.github/workflows/main.yml`
 
 ```yaml
 name: CI
-
 on:
   push:
     branches: [ master ]
-
 jobs:
   build:
     
     runs-on: ubuntu-latest
       
-    - name: Running node-memory-hog chaos experiment
+    - name: Running pod network duplication chaos experiment
       uses: litmuschaos/github-chaos-actions@v0.3.1
       env:
         KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-        ##if litmus is not installed
+        ##If litmus is not installed
         INSTALL_LITMUS: true
         ##Give application info under chaos
         APP_NS: default
         APP_LABEL: run=nginx
         APP_KIND: deployment
-        EXPERIMENT_NAME: node-memory-hog
+        EXPERIMENT_NAME: pod-network-duplication
         ##Custom images can also be used
         EXPERIMENT_IMAGE: litmuschaos/go-runner
         EXPERIMENT_IMAGE_TAG: latest
         IMAGE_PULL_POLICY: Always      
-        TOTAL_CHAOS_DURATION: 120
-        MEMORY_PERCENTAGE: 90
+        TARGET_CONTAINER: nginx
+        TOTAL_CHAOS_DURATION: 60
+        NETWORK_INTERFACE: eth0
+        CONTAINER_RUNTIME: docker
         ##Select true if you want to uninstall litmus after chaos
         LITMUS_CLEANUP: true        
 ```
 
 ## Environment Variabels
 
-The application pod for node-memory-hog will be identified with the app info variables.
+The application pod for pod-network-duplication will be identified with the app info variables.
 
 **Supported Chaos Action Tunables**
 
@@ -56,16 +56,28 @@ The application pod for node-memory-hog will be identified with the app info var
   </tr>
   <tr> 
     <td> EXPERIMENT_NAME </td>
-    <td> For Running node memory hog experiment keep it node-memory-hog</td>
+    <td> For Running pod network duplication experiment keep it pod-network-duplication </td>
     <td> Mandatory </td>
     <td> No default value </td>
   </tr>
   <tr> 
-    <td> MEMORY_PERCENTAGE </td>
-    <td> The size as percent of total available memory </td>
+    <td> NETWORK_INTERFACE </td>
+    <td> Name of ethernet interface considered for shaping traffic </td>
     <td> Optional </td>
-    <td> Default value is 90</td>
+    <td> Default value is eth0 </td>
   </tr>
+  <tr> 
+    <td> TARGET_CONTAINER </td>
+    <td> Name of container which is subjected to network duplication. </td>
+    <td> Optional </td>
+    <td> Default value is nginx </td>
+  </tr>
+  <tr> 
+    <td> CONTAINER_RUNTIME </td>
+    <td> Give the target container runtime </td>
+    <td> Optional </td>
+    <td> Default value is <code>'docker'</code> </td>
+  </tr>  
   <tr> 
     <td> TOTAL_CHAOS_DURATION </td>
     <td> The time duration for chaos injection (seconds) </td>
@@ -121,3 +133,4 @@ The application pod for node-memory-hog will be identified with the app info var
     <td> Default value is Always </td>
   </tr>  
 </table>
+

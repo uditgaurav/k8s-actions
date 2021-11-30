@@ -1,12 +1,15 @@
-# Node Memory Hog Experiment
+# Disk Fill Experiment
 
-This experiment causes Memory exhaustion on the Kubernetes node. The experiment aims to verify the resiliency of applications whose replicas may be evicted on account on nodes turning unschedulable due to lack of Memory resources. Check <a href="https://docs.litmuschaos.io/docs/node-memory-hog/">node memory hog docs</a> for more info. To know more and get started with chaos-actions visit <a href="https://github.com/litmuschaos/github-chaos-actions/blob/master/README.md">github-chaos-actions</a>. 
+This chaos action causes Disk Stress by filling up the Ephemeral Storage of the Pod using one of it containers. It forced the Pod to get Evicted if the Pod exceeds it Ephemeral Storage Limit.It tests the Ephemeral Storage Limits, to ensure those parameters are sufficient. Check <a href="https://docs.litmuschaos.io/docs/disk-fill/">disk fill docs</a> for more info. To know more and get started with chaos-actions visit <a href="https://github.com/litmuschaos/github-chaos-actions/blob/master/README.md">github-chaos-actions</a>. 
+
+**NOTE**: Appropriate Ephemeral Storage Requests and Limits should be set for the application before running the chaos action. 
 
 #### Sample workflow 
 
-A Sample workflow to run node-memory-hog experiment:
+A Sample workflow to run disk-fill experiment:
 
-`.github/workflows/push.yml`
+
+`.github/workflows/main.yml`
 
 ```yaml
 name: CI
@@ -20,30 +23,30 @@ jobs:
     
     runs-on: ubuntu-latest
       
-    - name: Running node-memory-hog chaos experiment
+    - name: Running disk-fill chaos experiment
       uses: litmuschaos/github-chaos-actions@v0.3.1
       env:
         KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-        ##if litmus is not installed
+        ##If litmus is not installed
         INSTALL_LITMUS: true
         ##Give application info under chaos
         APP_NS: default
         APP_LABEL: run=nginx
         APP_KIND: deployment
-        EXPERIMENT_NAME: node-memory-hog
+        EXPERIMENT_NAME: disk-fill
+        FILL_PERCENTAGE: 80
+        TARGET_CONTAINER: nginx
         ##Custom images can also be used
         EXPERIMENT_IMAGE: litmuschaos/go-runner
         EXPERIMENT_IMAGE_TAG: latest
-        IMAGE_PULL_POLICY: Always      
-        TOTAL_CHAOS_DURATION: 120
-        MEMORY_PERCENTAGE: 90
+        IMAGE_PULL_POLICY: Always    
         ##Select true if you want to uninstall litmus after chaos
         LITMUS_CLEANUP: true        
 ```
 
 ## Environment Variabels
 
-The application pod for node-memory-hog will be identified with the app info variables.
+The application pod for disk-fill will be identified with the app info variables.
 
 **Supported Chaos Action Tunables**
 
@@ -56,22 +59,22 @@ The application pod for node-memory-hog will be identified with the app info var
   </tr>
   <tr> 
     <td> EXPERIMENT_NAME </td>
-    <td> For Running node memory hog experiment keep it node-memory-hog</td>
+    <td> For Running disk fill experiment keep it disk-fill</td>
     <td> Mandatory </td>
     <td> No default value </td>
   </tr>
   <tr> 
-    <td> MEMORY_PERCENTAGE </td>
-    <td> The size as percent of total available memory </td>
+    <td> TARGET_CONTAINER </td>
+    <td> Name of container which is subjected to disk-fill</td>
     <td> Optional </td>
-    <td> Default value is 90</td>
-  </tr>
-  <tr> 
-    <td> TOTAL_CHAOS_DURATION </td>
-    <td> The time duration for chaos injection (seconds) </td>
-    <td> Optional </td>
-    <td> Default value is 120s </td>
+    <td> Default value is nginx </td>
   </tr>  
+  <tr> 
+    <td> FILL_PERCENTAGE </td>
+    <td> Percentage to fill the Ephemeral storage limit </td>
+    <td> Optional </td>
+    <td> Default value is 2</td>
+  </tr>
   <tr> 
     <td> APP_NS </td>
     <td> Provide namespace of application under chaos </td>
