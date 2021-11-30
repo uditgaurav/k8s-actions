@@ -4,7 +4,7 @@ This action provides a way to perform different chaos experiments on the Kuberne
 
 ## Pre-requisites
 
-Kubernetes 1.11 or later.
+Kubernetes 1.16 or later.
 
 ## Overview.
 
@@ -82,6 +82,73 @@ jobs:
           EXPERIMENT_IMAGE: litmuschaos/go-runner
           EXPERIMENT_IMAGE_TAG: latest
           JOB_CLEANUP_POLICY: delete
+          APP_NS: default
+          APP_LABEL: run=nginx
+          APP_KIND: deployment
+          IMAGE_PULL_POLICY: Always
+          TOTAL_CHAOS_DURATION: 30
+          CHAOS_INTERVAL: 10
+          FORCE: false
+
+      - name: Uninstall Litmus
+        if: always()
+        uses: litmuschaos/github-chaos-actions@master
+        env:
+          LITMUS_CLEANUP: true
+```
+
+#### For EKS Clusters
+
+A sample pod delete experiment workflow for EKS Clusters:
+
+`.github/workflows/main.yml`
+
+```yaml
+name: chaos-pipeline
+#events can be modified as per requirements
+on:
+  workflow_dispatch:
+
+jobs:
+  chaos-action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Optionally kubeconfig can be passed from github secrets in base64 encoded form as mentioned above.
+      - name: Writing kubeconfig for eks cluster
+        run: |
+          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name <eks_cluster_name>
+
+      - name: Setting up kubeconfig ENV for Github Chaos Action
+        run: echo ::set-env name=KUBE_CONFIG_DATA::$(base64 -w 0 ~/.kube/config)
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+      - name: Setup Litmus
+        uses: litmuschaos/github-chaos-actions@master
+        env:
+          INSTALL_LITMUS: true
+
+      - name: Running Litmus pod delete chaos experiment
+        uses: litmuschaos/github-chaos-actions@master
+        env:
+          EXPERIMENT_NAME: pod-delete
+          EXPERIMENT_IMAGE: litmuschaos/go-runner
+          EXPERIMENT_IMAGE_TAG: latest
+          JOB_CLEANUP_POLICY: delete
+          APP_NS: default
+          APP_LABEL: run=nginx
+          APP_KIND: deployment
+          IMAGE_PULL_POLICY: Always
+          TOTAL_CHAOS_DURATION: 30
+          CHAOS_INTERVAL: 10
+          FORCE: false
 
       - name: Uninstall Litmus
         if: always()
@@ -167,27 +234,14 @@ Some comman environment variables used for running the `github-chaos-actions` ar
   </tr>  
 </table>
 
-## For EKS Clusters
+#### For EKS Cluster
 
-A sample pod delete experiment workflow for EKS Clusters:
-
-`.github/workflows/main.yml`
+Setup AWS Credentials using [GitHub secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets). The secrets should now be populated to action using ENVs.
 
 ```yaml
-name: chaos-pipeline
-#events can be modified as per requirements
-on:
-  workflow_dispatch:
-
 jobs:
   chaos-action:
     runs-on: ubuntu-latest
-    # AWS secrets are required to configure & run chaos
-    env:
-      AWS_SECRET_ACCESS_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -195,33 +249,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-
-      # Optionally kubeconfig can be passed from github secrets in base64 encoded form as mentioned above.
-      - name: Writing kubeconfig for eks cluster
-        run: |
-          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name <eks_cluster_name>
-
-      - name: Setting up kubeconfig ENV for Github Chaos Action
-        run: echo ::set-env name=KUBE_CONFIG_DATA::$(base64 -w 0 ~/.kube/config)
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-
-      - name: Setup Litmus
-        uses: litmuschaos/github-chaos-actions@master
-        env:
-          INSTALL_LITMUS: true
-
-      - name: Running Litmus pod delete chaos experiment
-        uses: litmuschaos/github-chaos-actions@master
-        env:
-          EXPERIMENT_NAME: pod-delete
-          EXPERIMENT_IMAGE: litmuschaos/go-runner
-          EXPERIMENT_IMAGE_TAG: latest
-          JOB_CLEANUP_POLICY: delete
-
-      - name: Uninstall Litmus
-        if: always()
-        uses: litmuschaos/github-chaos-actions@master
-        env:
-          LITMUS_CLEANUP: true
 ```
+
+> Note: Either these secrets can be setup at Job level or have to be provided in all chaos-action steps.
