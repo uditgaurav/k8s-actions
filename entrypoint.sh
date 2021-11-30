@@ -9,9 +9,9 @@ PARALLEL_EXECUTION=${PARALLEL_EXECUTION:=1}
 ##Extract the base64 encoded config data and write this to the KUBECONFIG
 if [ ! -z "$KUBE_CONFIG_DATA" ]
 then
-mkdir -p ${HOME}/.kube
-echo "$KUBE_CONFIG_DATA" | base64 --decode > ${HOME}/.kube/config
-export KUBECONFIG=${HOME}/.kube/config
+  mkdir -p ${HOME}/.kube
+  echo "$KUBE_CONFIG_DATA" | base64 --decode > ${HOME}/.kube/config
+  export KUBECONFIG=${HOME}/.kube/config
 fi 
 
 ##Setup 
@@ -21,11 +21,9 @@ dir=${GOPATH}/src/github.com/litmuschaos/chaos-ci-lib
 
 if [[ ! -z $AWS_ACCESS_KEY_ID ]] && [[ ! -z $AWS_SECRET_ACCESS_KEY ]] && [[ ! -z $AWS_REGION ]]
 then 
-mkdir -p ${HOME}/.aws
-touch ${HOME}/.aws/credentials
-echo "[default]" >> ${HOME}/.aws/credentials
-echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ${HOME}/.aws/credentials
-echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ${HOME}/.aws/credentials
+  aws configure set default.region ${AWS_REGION}
+  aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
+  aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
 fi
 
 if [ ! -d $dir ]
